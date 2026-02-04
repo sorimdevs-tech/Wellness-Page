@@ -253,7 +253,6 @@ class AppointmentStatus(str, Enum):
     cancelled = "cancelled"
     missed = "missed"
     rescheduled = "rescheduled"
-    expired = "expired"
 
 class AppointmentBase(BaseModel):
     patient_id: str
@@ -269,6 +268,9 @@ class AppointmentCreate(AppointmentBase):
 class AppointmentUpdate(BaseModel):
     status: Optional[AppointmentStatus] = None
     notes: Optional[str] = None
+
+class RejectAppointmentRequest(BaseModel):
+    reason: Optional[str] = None
 
 class PatientInfo(BaseModel):
     id: str
