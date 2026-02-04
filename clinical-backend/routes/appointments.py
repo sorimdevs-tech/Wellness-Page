@@ -986,24 +986,39 @@ async def check_and_mark_missed_appointments(user_info = Depends(get_current_use
         db = get_database()
         now = datetime.utcnow()
         # Find all approved/scheduled appointments where the date has passed
-        query = {
+        query_missed = {
             "status": {"$in": ["approved", "scheduled"]},
+            "appointment_date": {"$lt": now}
+        }
+         # 2. MARK EXPIRED: Find pending appointments where date has passed
+        query_expired = {
+            "status": "pending",
             "appointment_date": {"$lt": now}
         }
         # For non-admin users, only check their own appointments
         if user_info["role"] == "doctor":
             doctor_ids = await get_doctor_ids_for_user(db, user_info["user_id"])
-            query["doctor_id"] = {"$in": doctor_ids}
+             query_missed["doctor_id"] = {"$in": doctor_ids}
+            query_expired["doctor_id"] = {"$in": doctor_ids}
         elif user_info["role"] == "user":
-            query["patient_id"] = user_info["user_id"]
-        # Update all matching appointments to missed
-        result = await db.appointments.update_many(
-            query,
+            query_missed["patient_id"] = user_info["user_id"]
+            query_expired["patient_id"] = user_info["user_id"]
+
+        # Update missed
+        result_missed = await db.appointments.update_many(
+            query_missed,
             {"$set": {"status": "missed", "auto_missed_at": now}}
         )
+        # Update expired
+        result_expired = await db.appointments.update_many(
+            query_expired,
+            {"$set": {"status": "expired", "auto_expired_at": now}}
+        )
+        
         return {
-            "message": f"Marked {result.modified_count} appointments as missed",
-            "count": result.modified_count
+            "message": f"Updated appointments: {result_missed.modified_count} missed, {result_expired.modified_count} expired",
+            "missed_count": result_missed.modified_count,
+            "expired_count": result_expired.modified_count
         }
     except Exception as e:
         import traceback
