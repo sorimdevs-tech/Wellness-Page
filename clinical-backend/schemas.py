@@ -253,6 +253,7 @@ class AppointmentStatus(str, Enum):
     cancelled = "cancelled"
     missed = "missed"
     rescheduled = "rescheduled"
+    expired = "expired"
 
 class AppointmentBase(BaseModel):
     patient_id: str
