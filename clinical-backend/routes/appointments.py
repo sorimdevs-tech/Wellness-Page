@@ -663,6 +663,17 @@ async def reject_appointment(
                     notification_message,
                     "appointment"
                 )
+            # NEW: Notify patient (confirmation)
+                patient_role = patient_user.get("currentRole", "user")
+                await create_notification(
+                    db,
+                    str(patient_user["_id"]),
+                    patient_role,
+                    "Appointment Cancelled",
+                    f"You have successfully cancelled your appointment with Dr. {doctor['name']} on {appointment_date}.",
+                    "appointment",
+                    appointment_id
+                )
             
             # Send chat notification about cancellation
             conversation_id = get_conversation_id(str(appointment["patient_id"]), str(doctor["user_id"]))
